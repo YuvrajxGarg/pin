@@ -231,8 +231,8 @@ body.win .titlebar { display: none; }
 .mark { position: relative; display: inline-block; white-space: nowrap; font: 900 var(--size, 40px)/1 var(--font-display);
   letter-spacing: -.055em; color: var(--text); padding-right: .055em; }
 .mark .l { display: inline-block; }
-.mark .mi { display: inline-block; height: .53em; width: .36em; margin: 0 .05em 0 .12em; overflow: hidden; line-height: 0; white-space: nowrap; }
-.mark .mi .c { display: inline-flex; vertical-align: top; flex-direction: column; gap: .045em; height: 100%; width: calc((.36em - .09em) / 3); margin-right: .045em; }
+.mark .mi { display: inline-block; height: .53em; width: .44em; margin: 0 .05em 0 .12em; overflow: hidden; line-height: 0; white-space: nowrap; }
+.mark .mi .c { display: inline-flex; vertical-align: top; flex-direction: column; gap: .045em; height: 100%; width: calc((.44em - .09em) / 3); margin-right: .045em; }
 .mark .mi .c:last-child { margin-right: 0; }
 .mark .mi b { display: block; flex: none; background: var(--accent); border-radius: .03em; }
 .mark .mi .c b:last-child { flex: 1; }

@@ -17,7 +17,7 @@ func drawMark(_ cg: CGContext, x: CGFloat, baseline: CGFloat, size: CGFloat, col
     func adv(_ t: String) -> CGFloat { CGFloat(CTLineGetTypographicBounds(line(t), nil, nil, nil)) }
     let ls = -0.055 * size
     let blockX = x + adv("p") + ls + 0.12 * size
-    let blockW = 0.36 * size
+    let blockW = 0.44 * size
     let nX = blockX + blockW + 0.05 * size
     let total = nX + adv("n") - x
     guard draw else { return total }
