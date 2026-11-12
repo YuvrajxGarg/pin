@@ -224,34 +224,37 @@ body.win .titlebar { display: none; }
 
 /* ======================= Pin ======================= */
 
-/* ---------- the mark: "pın" with a lime pin head for the i's dot ---------- */
-.mark { position: relative; display: inline-flex; align-items: baseline; font: 900 var(--size, 40px)/1 var(--font-display);
-  letter-spacing: -.055em; color: var(--text); padding-right: .055em; white-space: nowrap; }
-.mark .l { display: inline-block; position: relative; }
-.mark .head { position: absolute; left: 50%; top: -.04em; width: .25em; height: .25em; margin-left: -.165em; border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, rgba(255,255,255,.75) 0 .035em, transparent .06em), var(--accent);
-  box-shadow: 0 .02em .05em rgba(0,0,0,.35); }
+/* ---------- the mark: "p", a block of lime pin tiles standing in for the i, "n" ----------
+   Three columns of tiles at staggered heights, the screensaver's masonry wall in miniature,
+   at letter height. The gaps around it are set from the glyphs' ink, not their boxes: the p's
+   bowl overhangs its box and the n has a side bearing, so equal margins looked lopsided. */
+.mark { position: relative; display: inline-block; white-space: nowrap; font: 900 var(--size, 40px)/1 var(--font-display);
+  letter-spacing: -.055em; color: var(--text); padding-right: .055em; }
+.mark .l { display: inline-block; }
+.mark .mi { display: inline-block; height: .53em; width: .36em; margin: 0 .05em 0 .12em; overflow: hidden; line-height: 0; white-space: nowrap; }
+.mark .mi .c { display: inline-flex; vertical-align: top; flex-direction: column; gap: .045em; height: 100%; width: calc((.36em - .09em) / 3); margin-right: .045em; }
+.mark .mi .c:last-child { margin-right: 0; }
+.mark .mi b { display: block; flex: none; background: var(--accent); border-radius: .03em; }
+.mark .mi .c b:last-child { flex: 1; }
+.mark .mi .c:nth-child(1) b:nth-child(1) { height: .17em; } .mark .mi .c:nth-child(1) b:nth-child(2) { height: .13em; }
+.mark .mi .c:nth-child(2) b:nth-child(1) { height: .09em; } .mark .mi .c:nth-child(2) b:nth-child(2) { height: .19em; }
+.mark .mi .c:nth-child(3) b:nth-child(1) { height: .23em; }
 .logomark { width: 40px; height: 40px; border-radius: 11px; flex: none; display: flex; align-items: center; justify-content: center;
   background: linear-gradient(#2b2b2d, #121213); border: 1px solid var(--stroke-strong); box-shadow: 0 4px 14px rgba(0,0,0,.35); }
-.logomark .mark { margin-top: .1em; }
 .logomark.lg { width: 76px; height: 76px; border-radius: 21px; }
 
-/* ---------- splash: the letters scroll up like the saver's columns, then the head pins them ---------- */
-.splash-mark .l { opacity: 0; transform: translateY(1.1em); animation: col .9s cubic-bezier(.2,.8,.2,1) forwards;
+/* ---------- splash: the p and n rise, then the tile columns scroll up into the word at three
+   different speeds, like the screensaver's wall, and settle. ---------- */
+.splash-mark .l { opacity: 0; animation: rise-l .7s cubic-bezier(.2,.9,.25,1.05) forwards;
   /* room for the moving glyphs so their edges are never clipped mid-animation */
   padding: .12em .2em .3em; margin: -.12em -.2em -.3em; }
-.splash-mark .l:nth-child(1) { animation-delay: .05s; animation-duration: .95s; }
-.splash-mark .l:nth-child(2) { animation-delay: .16s; animation-duration: .8s; }
-.splash-mark .l:nth-child(3) { animation-delay: .1s; animation-duration: 1.05s; }
-.splash-mark .head { top: -.04em; margin-top: .12em; opacity: 0; transform: translateY(-1.6em) scale(.9);
-  animation: drop .55s 1s cubic-bezier(.5,0,.75,0) forwards, land .4s 1.55s cubic-bezier(.2,.9,.3,1.4) forwards; }
-.splash-mark .ripple { position: absolute; left: 50%; top: -.04em; width: .25em; height: .25em; margin: .12em 0 0 -.165em; border-radius: 50%;
-  border: .02em solid var(--accent); opacity: 0; animation: ripple .8s 1.55s ease-out forwards; }
-@keyframes col { 0% { opacity: 0; transform: translateY(1.1em); } 30% { opacity: 1; } 100% { opacity: 1; transform: none; } }
-@keyframes drop { 0% { opacity: 0; transform: translateY(-1.6em) scale(.9); } 20% { opacity: 1; } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-@keyframes land { 0% { opacity: 1; transform: scale(1.25, .7); } 100% { opacity: 1; transform: none; } }
-@keyframes ripple { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(3.4); } }
-.splash-tag { color: var(--text3); font-weight: 600; font-size: 13px; letter-spacing: .02em; opacity: 0; animation: fadein .5s 1.7s forwards; }
+.splash-mark .l:last-child { animation-delay: .12s; }
+.splash-mark .mi .c { transform: translateY(1.2em); animation: scroll-in var(--d) cubic-bezier(.22,.8,.25,1) .3s forwards; }
+.splash-mark .mi .c:nth-child(1) { --d: 1.15s; } .splash-mark .mi .c:nth-child(2) { --d: .85s; } .splash-mark .mi .c:nth-child(3) { --d: 1.35s; }
+@keyframes rise-l { from { opacity: 0; transform: translateY(.3em); } to { opacity: 1; transform: none; } }
+@keyframes scroll-in { to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .splash-mark .l, .splash-mark .mi .c { animation: none; opacity: 1; transform: none; } }
+.splash-tag { color: var(--text3); font-weight: 600; font-size: 13px; letter-spacing: .02em; opacity: 0; animation: fadein .5s 1.5s forwards; }
 
 /* ---------- sidebar cards ---------- */
 .source { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
