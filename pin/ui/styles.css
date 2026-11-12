@@ -242,6 +242,8 @@ body.win .titlebar { display: none; }
 .logomark { width: 40px; height: 40px; border-radius: 11px; flex: none; display: flex; align-items: center; justify-content: center;
   background: linear-gradient(#2b2b2d, #121213); border: 1px solid var(--stroke-strong); box-shadow: 0 4px 14px rgba(0,0,0,.35); }
 .logomark.lg { width: 76px; height: 76px; border-radius: 21px; }
+/* Centre the mark on its ink: the line box carries empty space above the x-height. */
+.logomark .mark { padding-right: 0; position: relative; top: -.13em; }
 
 /* ---------- splash: the p and n rise, then the tile columns scroll up into the word at three
    different speeds, like the screensaver's wall, and settle. ---------- */

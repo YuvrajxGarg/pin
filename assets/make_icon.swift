@@ -42,6 +42,19 @@ func drawMark(_ cg: CGContext, x: CGFloat, baseline: CGFloat, size: CGFloat, col
     return total
 }
 
+/// The mark's ink (what's actually painted) for a mark drawn at x = 0, baseline = 0, so callers
+/// can centre it optically: the p's descender and the letters' side bearings aren't ink.
+func markInk(size: CGFloat) -> CGRect {
+    let font = NSFont.systemFont(ofSize: size, weight: .black)
+    let attrs: [NSAttributedString.Key: Any] = [.font: font]
+    func line(_ t: String) -> CTLine { CTLineCreateWithAttributedString(NSAttributedString(string: t, attributes: attrs)) }
+    let ctx = CGContext(data: nil, width: 8, height: 8, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    let p = CTLineGetImageBounds(line("p"), ctx), n = CTLineGetImageBounds(line("n"), ctx)
+    let nX = CGFloat(CTLineGetTypographicBounds(line("p"), nil, nil, nil)) - 0.055 * size + 0.12 * size + 0.44 * size + 0.05 * size
+    let top = max(0.53 * size, n.maxY)
+    return CGRect(x: p.minX, y: p.minY, width: nX + n.maxX - p.minX, height: top - p.minY)
+}
+
 func bitmap(_ w: Int, _ h: Int, _ body: (CGContext) -> Void) -> Data {
     let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: w, pixelsHigh: h, bitsPerSample: 8,
                                samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
@@ -84,12 +97,11 @@ func appIcon(_ px: Int) -> Data {
 
         let size = tile.width * (px <= 32 ? 0.44 : 0.36)
         let white = NSColor(white: 0.97, alpha: 1).cgColor
-        let w = drawMark(cg, x: 0, baseline: 0, size: size, color: white, draw: false)
-        let xh = NSFont.systemFont(ofSize: size, weight: .black).xHeight
+        let ink = markInk(size: size)
         cg.saveGState()
         cg.addPath(tilePath)
         cg.clip()
-        drawMark(cg, x: tile.midX - w / 2, baseline: tile.midY - xh * 0.5, size: size, color: white)
+        drawMark(cg, x: tile.midX - ink.midX, baseline: tile.midY - ink.midY, size: size, color: white)
         cg.restoreGState()
     }
 }
