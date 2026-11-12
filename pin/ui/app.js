@@ -24,7 +24,7 @@
   const icon = (n) => `<svg class="i" viewBox="0 0 24 24">${ICONS[n] || ''}</svg>`;
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const MARK = (size) => `<span class="mark" style="--size:${size}px"><span class="l">p</span><span class="l">ı<i class="head"></i></span><span class="l">n</span></span>`;
+  const MARK = (size) => `<span class="mark" style="--size:${size}px"><span class="l">p</span><span class="mi"><span class="c"><b></b><b></b><b></b></span><span class="c"><b></b><b></b><b></b></span><span class="c"><b></b><b></b></span></span><span class="l">n</span></span>`;
   function hydrateIcons(root) {
     (root || document).querySelectorAll('[data-icon]').forEach((el) => {
       const svg = icon(el.dataset.icon);
@@ -656,9 +656,9 @@
     renderPill();
     await load();
     if (location.search.includes('splash')) return; // ?demo&splash keeps the intro up for previews
-    setTimeout(() => { $('#splash').classList.add('out'); $('#app').classList.add('in'); layout(); }, 2100);
-    setTimeout(() => $('#splash').remove(), 2700);
-    if (access && !pins.length) setTimeout(() => refresh(false), 2300);
+    setTimeout(() => { $('#splash').classList.add('out'); $('#app').classList.add('in'); layout(); }, 1950);
+    setTimeout(() => $('#splash').remove(), 2550);
+    if (access && !pins.length) setTimeout(() => refresh(false), 2150);
   }
 
   // Demo data for previewing the UI in a plain browser (open index.html?demo).

@@ -1,4 +1,4 @@
-// Renders the Pin icon: "pin" in a heavy grotesk, the i dotted with a lime pin head.
+// Renders the Pin icon: "pin" in a heavy grotesk, the i drawn as a block of lime pin tiles.
 // Same tile, gradient and type as Dwn and Tag so the apps read as a family.
 //   swift assets/make_icon.swift <out.iconset>
 import AppKit
@@ -6,39 +6,53 @@ import CoreText
 
 let lime = NSColor(srgbRed: 0.80, green: 1.0, blue: 0.30, alpha: 1).cgColor
 
-/// Draws "pin": a dotless i whose dot is a lime pin head. Returns drawn width.
-/// (x, baseline) in y-up coordinates.
+/// Draws the Pin mark: "p", a block of lime tiles standing in for the i (three columns at
+/// staggered heights, the screensaver's masonry wall in miniature), "n". Matches .mark in the
+/// app's styles.css. Returns drawn width. (x, baseline) in y-up coordinates.
 @discardableResult
 func drawMark(_ cg: CGContext, x: CGFloat, baseline: CGFloat, size: CGFloat, color: CGColor, draw: Bool = true) -> CGFloat {
     let font = NSFont.systemFont(ofSize: size, weight: .black)
-    let kern = -size * 0.055
-    let attrs: [NSAttributedString.Key: Any] = [.font: font, .kern: kern, .foregroundColor: NSColor(cgColor: color)!]
-    func width(_ t: String) -> CGFloat {
-        CGFloat(CTLineGetTypographicBounds(CTLineCreateWithAttributedString(NSAttributedString(string: t, attributes: attrs)), nil, nil, nil))
-    }
-    let word = "p\u{0131}n"
-    let textW = width(word) - size * 0.055
-    guard draw else { return textW }
+    let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: NSColor(cgColor: color)!]
+    func line(_ t: String) -> CTLine { CTLineCreateWithAttributedString(NSAttributedString(string: t, attributes: attrs)) }
+    func adv(_ t: String) -> CGFloat { CGFloat(CTLineGetTypographicBounds(line(t), nil, nil, nil)) }
+    let ls = -0.055 * size
+    let blockX = x + adv("p") + ls + 0.12 * size
+    let blockW = 0.44 * size
+    let nX = blockX + blockW + 0.05 * size
+    let total = nX + adv("n") - x
+    guard draw else { return total }
 
-    let line = CTLineCreateWithAttributedString(NSAttributedString(string: word, attributes: attrs))
-    cg.textPosition = CGPoint(x: x, y: baseline)
-    CTLineDraw(line, cg)
+    cg.textPosition = CGPoint(x: x, y: baseline); CTLineDraw(line("p"), cg)
+    cg.textPosition = CGPoint(x: nX, y: baseline); CTLineDraw(line("n"), cg)
 
-    // Centre of the dotless i's stem.
-    let stemStart = x + width("p")
-    let stemW = width("\u{0131}") + kern
-    let cx = stemStart + stemW / 2
-    let r = size * 0.125
-    let cy = baseline + font.xHeight + size * 0.08 + r
-    let head = CGRect(x: cx - r, y: cy - r, width: r * 2, height: r * 2)
-    cg.addEllipse(in: head)
+    let gap = 0.045 * size, colW = (blockW - 2 * gap) / 3, top = baseline + 0.53 * size, r = 0.03 * size
+    let cols: [[CGFloat]] = [[0.17, 0.13], [0.09, 0.19], [0.23]]   // tile heights from the top; the last tile fills the rest
     cg.setFillColor(lime)
-    cg.fillPath()
-    // A small highlight so the dot reads as a glossy pin head.
-    cg.addEllipse(in: CGRect(x: cx - r * 0.55, y: cy + r * 0.05, width: r * 0.5, height: r * 0.42))
-    cg.setFillColor(NSColor.white.withAlphaComponent(0.55).cgColor)
-    cg.fillPath()
-    return textW
+    for (i, hs) in cols.enumerated() {
+        let cx = blockX + CGFloat(i) * (colW + gap)
+        var y = top
+        for h in hs {
+            let rect = CGRect(x: cx, y: y - h * size, width: colW, height: h * size)
+            cg.addPath(CGPath(roundedRect: rect, cornerWidth: r, cornerHeight: r, transform: nil)); cg.fillPath()
+            y -= h * size + gap
+        }
+        let rect = CGRect(x: cx, y: baseline, width: colW, height: y - baseline)
+        cg.addPath(CGPath(roundedRect: rect, cornerWidth: r, cornerHeight: r, transform: nil)); cg.fillPath()
+    }
+    return total
+}
+
+/// The mark's ink (what's actually painted) for a mark drawn at x = 0, baseline = 0, so callers
+/// can centre it optically: the p's descender and the letters' side bearings aren't ink.
+func markInk(size: CGFloat) -> CGRect {
+    let font = NSFont.systemFont(ofSize: size, weight: .black)
+    let attrs: [NSAttributedString.Key: Any] = [.font: font]
+    func line(_ t: String) -> CTLine { CTLineCreateWithAttributedString(NSAttributedString(string: t, attributes: attrs)) }
+    let ctx = CGContext(data: nil, width: 8, height: 8, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    let p = CTLineGetImageBounds(line("p"), ctx), n = CTLineGetImageBounds(line("n"), ctx)
+    let nX = CGFloat(CTLineGetTypographicBounds(line("p"), nil, nil, nil)) - 0.055 * size + 0.12 * size + 0.44 * size + 0.05 * size
+    let top = max(0.53 * size, n.maxY)
+    return CGRect(x: p.minX, y: p.minY, width: nX + n.maxX - p.minX, height: top - p.minY)
 }
 
 func bitmap(_ w: Int, _ h: Int, _ body: (CGContext) -> Void) -> Data {
@@ -83,12 +97,11 @@ func appIcon(_ px: Int) -> Data {
 
         let size = tile.width * (px <= 32 ? 0.44 : 0.36)
         let white = NSColor(white: 0.97, alpha: 1).cgColor
-        let w = drawMark(cg, x: 0, baseline: 0, size: size, color: white, draw: false)
-        let xh = NSFont.systemFont(ofSize: size, weight: .black).xHeight
+        let ink = markInk(size: size)
         cg.saveGState()
         cg.addPath(tilePath)
         cg.clip()
-        drawMark(cg, x: tile.midX - w / 2, baseline: tile.midY - xh * 0.72, size: size, color: white)
+        drawMark(cg, x: tile.midX - ink.midX, baseline: tile.midY - ink.midY, size: size, color: white)
         cg.restoreGState()
     }
 }
