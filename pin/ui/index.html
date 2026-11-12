@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Pin</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="splash" class="pywebview-drag-region">
+    <div class="glow"></div>
+    <span class="mark splash-mark" style="--size:80px"><span class="l">p</span><span class="l">ı<i class="ripple"></i><i class="head"></i></span><span class="l">n</span></span>
+    <div class="splash-tag">Your Pinterest feed, as a screensaver</div>
+  </div>
+
+  <div id="app">
+    <aside id="sidebar">
+      <div class="titlebar pywebview-drag-region"></div>
+      <div class="side-scroll">
+        <div class="card source">
+          <div class="source-head">
+            <div class="avatar" id="source-icon"></div>
+            <div class="t"><b id="source-name">…</b><span id="source-kind"></span></div>
+            <button class="btn-quiet" id="change-source">Change</button>
+          </div>
+          <button class="btn-primary" id="refresh-btn"><i data-icon="refresh"></i><span>Refresh pins</span></button>
+          <div class="minor"><button id="start-over" title="Drop the cached pins and fetch a fresh set">Start over with a fresh set</button></div>
+        </div>
+
+        <div class="card saver-card">
+          <div class="saver-status">
+            <i class="dot" id="saver-dot"></i>
+            <div class="t"><b id="saver-title">Screensaver</b><span id="saver-sub"></span></div>
+          </div>
+          <div class="row2">
+            <button class="btn-quiet" id="saver-install"><i data-icon="download"></i><span>Install</span></button>
+            <button class="btn-quiet" id="saver-preview"><i data-icon="play"></i>Preview</button>
+          </div>
+          <div class="slider">
+            <div class="top"><span>Scroll speed</span><b id="speed-val"></b></div>
+            <input type="range" id="speed" min="6" max="90" step="1">
+          </div>
+          <div class="slider">
+            <div class="top"><span>Tile size</span><b id="tile-val"></b></div>
+            <input type="range" id="tile" min="160" max="560" step="10">
+          </div>
+          <div class="mini-opts">
+            <button class="opt" id="opt-clock"><div class="t"><b>Show the clock</b></div><span class="switch"></span></button>
+            <button class="opt" id="opt-24h"><div class="t"><b>24-hour clock</b></div><span class="switch"></span></button>
+          </div>
+        </div>
+      </div>
+
+      <footer id="footer">
+        <button class="frow" id="save-row" title="Change where pins are saved"><i data-icon="folder"></i><span>Saving to</span><span class="path" id="save-path"></span></button>
+        <div class="frow brandrow">
+          <span class="mark" style="--size:14px"><span class="l">p</span><span class="l">ı<i class="head"></i></span><span class="l">n</span></span>
+          <span id="version"></span>
+          <button class="update-pill hidden" id="update-pill"></button>
+        </div>
+      </footer>
+    </aside>
+
+    <main id="content">
+      <div class="topbar pywebview-drag-region">
+        <div class="tabs view" id="view-tabs">
+          <button data-v="pins" class="on">Pins <span class="n" id="n-pins">0</span></button>
+          <button data-v="hidden">Hidden <span class="n" id="n-hidden">0</span></button>
+        </div>
+        <div class="selbar hidden" id="selbar">
+          <span class="count" id="sel-count"></span>
+          <button class="btn-quiet" id="sel-save"><i data-icon="download"></i>Save</button>
+          <button class="btn-quiet" id="sel-hide"><i data-icon="eyeoff"></i><span>Hide</span></button>
+          <button class="btn-quiet" id="sel-clear">Cancel</button>
+        </div>
+        <div class="top-actions">
+          <button class="btn-quiet" id="select-all"><i data-icon="check"></i>Select</button>
+          <button class="btn-quiet" id="save-all"><i data-icon="download"></i>Save all</button>
+          <button class="btn-icon filled" id="open-saved" title="Show saved pins"><i data-icon="folder"></i></button>
+          <button class="btn-icon filled" id="open-settings" title="Settings"><i data-icon="gear"></i></button>
+        </div>
+      </div>
+      <div id="grid" class="grid"><div class="cols" id="cols"></div></div>
+      <div id="empty" class="empty hidden"></div>
+      <div id="access" class="access hidden"></div>
+    </main>
+  </div>
+
+  <div id="viewer" class="hidden"></div>
+  <div id="modal-root"></div>
+  <div id="toasts"></div>
+  <script src="app.js"></script>
+</body>
+</html>

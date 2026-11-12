@@ -1,0 +1,6 @@
+# App window (WebKit on macOS, Edge WebView2 on Windows)
+pywebview>=5.0
+# Thumbnails and the image viewer
+pillow>=10.0
+# Trusted certificates for Pinterest and update checks in the packaged app
+certifi

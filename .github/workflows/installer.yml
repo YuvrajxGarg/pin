@@ -1,0 +1,55 @@
+# Checks the installers on pull requests that touch them: builds the app, the
+# Windows setup wizard and the macOS disk image, installs and uninstalls the
+# setup, and keeps both as downloadable artifacts. Releases build them in release.yml.
+name: Installer
+
+on:
+  pull_request:
+    paths: [installer/**, saver/**, .github/workflows/**, Pin.spec]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyinstaller certifi -r requirements.txt
+      - name: Build the screensaver (macOS)
+        if: runner.os == 'macOS'
+        run: saver/mac/build.sh
+      - uses: actions/setup-dotnet@v4
+        if: runner.os == 'Windows'
+        with:
+          dotnet-version: "8.0.x"
+      - name: Build the screensaver (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          dotnet publish saver/windows/PinSaver.csproj -c Release -o saver/windows/publish
+          cp saver/windows/publish/Pin.exe saver/windows/publish/Pin.scr
+      - run: pyinstaller --noconfirm --log-level WARN Pin.spec
+      - name: Disk image (macOS)
+        if: runner.os == 'macOS'
+        run: installer/build_mac.sh Pin && installer/test_mac.sh Pin
+      - name: Setup wizard (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          installer/build_windows.ps1 -App Pin -Version "$(Get-Content VERSION)" -Url https://pin.pxlvzn.in
+          installer/test_windows.ps1 -App Pin -Smoke "python tests/smoke_app.py"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pin-${{ runner.os }}
+          path: |
+            dist/Pin.dmg
+            dist/Pin-Setup.exe
+          if-no-files-found: error

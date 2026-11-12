@@ -1,0 +1,124 @@
+# Builds Pin for macOS and Windows when a version tag (v1.2.3) is
+# pushed, and attaches the apps to that GitHub release.
+# What people download (installer/ builds these):
+#   macOS   -> Pin.dmg          (drag to Applications)
+#   Windows -> Pin-Setup.exe    (setup wizard)
+# What installed copies update from (keep these: every existing install uses them):
+#   macOS   -> Pin-mac.zip      + .sha256
+#   Windows -> Pin-windows.zip  + .sha256
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to (re)build, e.g. v1.2.0
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The release stays a draft until both apps are attached, so the updater never
+      # sees a published release that's missing a platform's download.
+      - name: Create the draft release if it doesn't exist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --title "Pin ${TAG#v}" --generate-notes --verify-tag --draft
+
+  build:
+    needs: release
+    strategy:
+      matrix:
+        os: [macos-15, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Set version from the tag
+        run: echo "${TAG#v}" > VERSION
+      - run: pip install pyinstaller certifi -r requirements.txt
+      - run: python -m unittest discover tests
+      - name: Build the screensaver (macOS)
+        if: runner.os == 'macOS'
+        run: saver/mac/build.sh "${TAG#v}"
+      - uses: actions/setup-dotnet@v4
+        if: runner.os == 'Windows'
+        with:
+          dotnet-version: "8.0.x"
+      - name: Build the screensaver (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          dotnet publish saver/windows/PinSaver.csproj -c Release -o saver/windows/publish -p:Version="${TAG#v}"
+          cp saver/windows/publish/Pin.exe saver/windows/publish/Pin.scr
+      - run: pyinstaller --noconfirm --log-level WARN Pin.spec
+      - name: Smoke-test the built app
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then python tests/smoke_app.py dist/Pin.app/Contents/MacOS/Pin
+          else python tests/smoke_app.py dist/Pin/Pin.exe; fi
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cd dist
+          ditto -c -k --keepParent Pin.app Pin-mac.zip
+          shasum -a 256 Pin-mac.zip > Pin-mac.zip.sha256
+          cat Pin-mac.zip.sha256
+      - name: Disk image (macOS)
+        if: runner.os == 'macOS'
+        run: installer/build_mac.sh Pin && installer/test_mac.sh Pin
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cd dist
+          Compress-Archive -Path Pin -DestinationPath Pin-windows.zip
+          $h = (Get-FileHash Pin-windows.zip -Algorithm SHA256).Hash.ToLower()
+          "$h  Pin-windows.zip" | Out-File -Encoding ascii -NoNewline Pin-windows.zip.sha256
+          Get-Content Pin-windows.zip.sha256
+      - name: Setup wizard (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          installer/build_windows.ps1 -App Pin -Version $env:TAG -Url https://pin.pxlvzn.in
+          installer/test_windows.ps1 -App Pin -Smoke "python tests/smoke_app.py"
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then files="dist/Pin-mac.zip* dist/Pin.dmg*"
+          else files="dist/Pin-windows.zip* dist/Pin-Setup.exe*"; fi
+          gh release upload "$TAG" $files --clobber
+
+  publish:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish once both apps are attached
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          assets=$(gh release view "$TAG" --json assets -q '.assets[].name')
+          echo "$assets"
+          for a in Pin-mac.zip Pin-mac.zip.sha256 Pin-windows.zip Pin-windows.zip.sha256 Pin.dmg Pin-Setup.exe; do
+            echo "$assets" | grep -qx "$a" || { echo "missing $a, leaving the release as a draft"; exit 1; }
+          done
+          gh release edit "$TAG" --draft=false --latest
